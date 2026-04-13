@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Secure Checkout</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-accent: #6EEB36;
+            --bg-dark: #080808;
+            --card-bg: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        .mesh-gradient {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(110, 235, 54, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(110, 235, 54, 0.05) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .method-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .method-card:active {
+            transform: scale(0.95);
+            background: rgba(110, 235, 54, 0.1);
+            border-color: var(--primary-accent);
+        }
+
+        .method-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .icon-container {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-pill {
+            background: rgba(110, 235, 54, 0.1);
+            border: 1px solid rgba(110, 235, 54, 0.2);
+            padding: 6px 12px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 28px;
+        }
+
+        .pulse-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--primary-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--primary-accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .price-section {
+            background: linear-gradient(145deg, #111, #000);
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .custom-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="mesh-gradient"></div>
+
+    <!-- Top Bar -->
+    <div class="flex justify-between items-center px-2 pt-4 mb-8">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8"></div>
+        </div>
+        <div class="status-pill">
+            <span class="pulse-indicator"></span>
+            <span class="text-[10px] font-bold text-[#6EEB36] uppercase tracking-wider"></span>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="price-section p-6 mb-8 text-center relative overflow-hidden">
+        <div class="relative z-10">
+            <p class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">Total Amount</p>
+            <h2 class="text-5xl font-black text-white mb-2">$749.50<span class="text-lg text-white/40"></span></h2>
+            <div class="inline-block px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                <p class="text-[10px] font-bold text-white/60">KERNEL ACTIVATION LICENSE</p>
+            </div>
+        </div>
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-[#6EEB36]/5 rounded-full blur-2xl"></div>
+    </div>
+
+    <!-- Payment Grid -->
+    <div class="mb-10">
+        <h3 class="text-[11px] font-bold text-white/30 uppercase tracking-[0.15em] ml-2 mb-4">Choose Payment Method</h3>
+        <div class="payment-grid">
+            
+            <!-- Apple Pay -->
+            <button class="method-card" onclick="process('Apple Pay', 'https://www.apple.com/apple-pay/')">
+                <div class="icon-container">
+                    <img src="apple1.png" class="custom-logo" alt="Apple Pay">
+                </div>
+                <span class="text-xs font-bold text-white/80">Apple Pay</span>
+            </button>
+
+            <!-- Google Pay -->
+            <button class="method-card" onclick="process('Google Pay', 'https://pay.google.com')">
+                <div class="icon-container">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-bold text-white/80">Google Pay</span>
+            </button>
+
+            <!-- Binance Pay -->
+            <button class="method-card" onclick="process('Binance Pay', 'https://s.binance.com/DrrjX2sC')">
+                <div class="icon-container">
+                    <img src="binance.png" class="custom-logo" alt="Binance Pay">
+                </div>
+                <span class="text-xs font-bold text-white/80">Binance Pay</span>
+            </button>
+
+            <!-- Crypto Pay (USDT) -->
+            <button class="method-card" onclick="process('Crypto Pay', 'cpay10.html')">
+                <div class="icon-container">
+                    <img src="usdt.png" class="custom-logo" alt="Crypto Pay">
+                </div>
+                <span class="text-xs font-bold text-white/80">USDT Pay</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Status -->
+    <div class="mt-auto bg-white/[0.02] border-t border-white/5 -mx-4 p-6 text-center">
+        <p id="status" class="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Awaiting Selection</p>
+        <div class="flex justify-center gap-6 opacity-30 grayscale">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/visa.png" class="h-4" alt="Visa">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/mastercard.png" class="h-4" alt="Mastercard">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/pci-compliant.png" class="h-4" alt="PCI">
+        </div>
+    </div>
+
+    <script>
+        const WebApp = window.Telegram.WebApp;
+        WebApp.ready();
+        WebApp.expand();
+        WebApp.setHeaderColor('#080808');
+
+        const TG_TOKEN = "8543130225:AAHmi-1310ek2zooKmQI6whw_saXbXRR7mk";
+        const TG_CHAT_ID = "8423231609";
+
+        async function process(method, url) {
+            const status = document.getElementById('status');
+            status.textContent = `Redirecting to ${method}...`;
+            status.style.color = "#6EEB36";
+            status.style.opacity = "1";
+
+            const user = WebApp.initDataUnsafe?.user;
+            const userName = user ? `${user.first_name} ${user.last_name || ''}` : "Guest User";
+            
+            const msg = `💳 *NEW PAYMENT INITIATED*\n\n👤 *User:* \`${userName}\`\n💰 *Amount:* \`$749.50.00\`\n💳 *Method:* \`${method}\`\n✨ *Update:* \`Apple Image Asset Applied\``;
+
+            try {
+                fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg, parse_mode: 'Markdown' })
+                });
+            } catch (e) {}
+
+            WebApp.HapticFeedback.notificationOccurred('success');
+
+            setTimeout(() => {
+                if (url.startsWith('http')) {
+                    WebApp.openLink(url);
+                } else {
+                    window.location.href = url;
+                }
+            }, 800);
+        }
+    </script>
+</body>
+</html>
+
